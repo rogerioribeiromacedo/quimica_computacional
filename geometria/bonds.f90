@@ -1,5 +1,5 @@
 !-----------------------------------------------------------------------------------
-!bonds: A program for calculation of bond lenght and numbers of bonds in
+!bonds: A program for calculation of bond lenght and numbers of bonds.
 !-----------------------------------------------------------------------------------
 !>@file   Main program
 !>@author Rogério Ribeiro Macêdo
@@ -28,59 +28,24 @@
 !e-mail: rogerioribeiromacedo@gmail.com
 !-----------------------------------------------------------------------------------
 program bonds
+    use mod_functions
     implicit none
     character(len=5), parameter :: PROG_NAME = 'bonds'
-    character(len=256) :: file_name = ""
+    character(:), allocatable :: file_name
+    type(atom_structure), allocatable, dimension(:) :: atoms
     
     ! Capture the file name
     file_name = get_filename()
     if (len(file_name) > 0 ) then
-        call write_file()
+
+        atoms = get_structure(file_name)
     end if
 
 contains
     subroutine write_file()
-        character(len=256) :: linha
-        integer :: fim_arquivo
-        ! Opening a file
-        open(10, file=file_name, status="old")
         
-        write(*, "(a)") "", "Structure: "
-        do 
-            read(10, fmt="(a)", iostat=fim_arquivo) linha
-            if (fim_arquivo < 0) then
-                exit
-            else
-                write(*, "(a)") trim(linha)
-            end if
-        end do
-        
-        ! Closing a file
-        close(10)
     end subroutine write_file
 
 
-    character(len=256) function get_filename() result(file)
-        character(len=:), allocatable :: argument
-        integer :: arglen, argc
 
-        file = ""
-        argc = command_argument_count()
-        if (argc > 0) then
-            ! Get the arguments                        
-            call get_command_argument(1,length=arglen)
-            allocate(character(arglen) :: argument)
-            call get_command_argument(1,value=argument)
-            argument = trim(argument)
-
-            if (argument(len(argument)-3:len(argument)) == ".xyz") then
-                file = adjustr(trim(argument))
-            else
-                write(*, fmt="(a)") "Rememnber, the file must be in a xyz format, and with a xyz extension."
-            end if
-        else
-            write(*, fmt="(a)") "You must inform the file name (.xyz)"
-        end if
-            
-    end function get_filename
 end program bonds
