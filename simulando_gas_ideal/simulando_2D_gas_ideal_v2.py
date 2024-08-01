@@ -108,7 +108,7 @@ class GasIdeal:
         # Avaliando a colisões entre as partículas
         for i in range(self.n_particulas):
             for j in range(i+1, self.n_particulas):
-                # Calcula a norma ou módulo do vertor para saber se ouve colisão
+                # Calcula a norma ou módulo do vetor para saber se ouve colisão
                 if np.linalg.norm(pos_nova[i] - pos_nova[j]) < 2*self.raio:
                     rdiff = self.posicoes[i] - self.posicoes[j]
                     vdiff = self.velocidades[i] - self.velocidades[j]
@@ -140,7 +140,7 @@ class GasIdeal:
 
         return pos_simul, vel_simul
 
-    def energia_cinetica_media(self, v):
+    def energia_cinetica_media(self, v: float) -> float:
         """
         Calcula a energia cinética média.
 
@@ -161,6 +161,7 @@ class GasIdeal:
         return 0.5*self.massa*media_quad_vel
 
     def MaxwellBoltzmann(self, v):
+        """Distribuição de Maxwell."""
         # Energia cinética média
         KE_avg = 1/2*self.massa*np.sum(self.v_inicial**2)
 
@@ -220,14 +221,14 @@ def tchau():
     sys.exit()
 
 
-def gerar_img_inicial(gas):
+def gerar_img_inicial(gas: GasIdeal):
     """
     Gera uma imagem inicial da distribuição das partículas.
 
     Parameters
     ----------
-    gas : object
-        Objeto da classe de gas ideal.
+    gas : GasIdeal
+        Classe de Gas Ideal.
 
     Returns
     -------
@@ -279,7 +280,7 @@ def animate_positions(frame, ax1, plt, positions, gas, speeds, v):
 
     ax1.set_xlabel('$x$', fontsize=15)
     ax1.set_ylabel('$y$', fontsize=15)
-    ax1.set_title('Ideal gas animation', fontsize=15)
+    ax1.set_title('Animação do Gás Ideal', fontsize=15)
     ax1.set_xlim(0, gas.largura)
     ax1.set_ylim(0, gas.largura)
     ax1.set_aspect('equal')
@@ -287,6 +288,32 @@ def animate_positions(frame, ax1, plt, positions, gas, speeds, v):
     ax1.set_yticks([])
 
     plt.tight_layout()
+
+
+def exibe_resultados(gas: GasIdeal, vel_simul: np.ndarray) -> None:
+    """
+    Exibindo resultados da simulação.
+
+    Parameters
+    ----------
+    gas : GasIdeal
+        Objeto da classe.
+    vel_simul : numpy.ndarray
+        Array contendo as velocidades das partículas.
+
+    Returns
+    -------
+    None
+        Nada.
+
+    """
+    # Verifica se a energia cinética total é conservada
+    print(f' - Energia cinética total conversada: {np.sum(vel_simul[0]**2):.3f}, {np.sum(vel_simul[-1]**2):.3f}')
+
+    Ek_media = gas.energia_cinetica_media(vel_simul)
+    print(f" - Energia cinética média: {Ek_media:12.4E}")
+    temp = (Ek_media/k_b)*(3/2)
+    print(f" - Temperatura: {temp:8.2f} K")
 
 
 def main():
@@ -393,37 +420,30 @@ def main():
         print(" - Simulando...")
         pos_simul, vel_simul = gas.simular()
 
-        # Verifica se a energia cinética é conservada
-        # check that the total kinetic energy is conserved
-        # print(np.sum(speeds[0]**2), np.sum(speeds[-1]**2))
-
-        Ek_media = gas.energia_cinetica_media(vel_simul)
-        print(f" - Energia cinética média: {Ek_media:12.4E}")
-        temp = (Ek_media/k_b)*(3/2)
-        print(f" - Temperatura: {temp:8.2f} K")
-        print("")
-        print(len(vel_simul))
-
         # Animando
-        # print(" - Gerando animação")
-        # v = np.linspace(0, 35, 500)
-        # fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+        print(" - Gerando animação")
+        v = np.linspace(0, 35, 500)
+        fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
 
         # # Intervalo para animação
-        # interval = duracao*1e3 / n_passos
+        interval = duracao*1e3 / n_passos
+        animation = FuncAnimation(fig,
+                                  animate_positions,
+                                  frames=n_passos,
+                                  interval=interval,
+                                  fargs=[ax1, plt, pos_simul, gas, vel_simul, v])
+        animation.save('gas_ideal.mp4', writer='ffmpeg', fps=30)
 
-        # animation = FuncAnimation(fig,
-        #                           animate_positions,
-        #                           frames=n_passos,
-        #                           interval=interval,
-        #                           fargs=[ax1, plt, pos_simul, gas, vel_simul, v])
-        # animation.save('gas_ideal.mp4', writer='ffmpeg', fps=30)
+        #
+        # Resultados
+        #
+        exibe_resultados(gas, vel_simul)
 
         print("")
         print(" - Fim da simulação.")
 
-    except ValueError:
-        print(" - Erro na digitação do valor.")
+    except ValueError as erro:
+        print(f" - Erro: {erro}")
         sys.exit(-1)
 
 
